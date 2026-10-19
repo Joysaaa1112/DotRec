@@ -37,14 +37,45 @@ jobs:
       - name: Build
         run: bash scripts/build.sh
 
+      - name: Checksum
+        run: |
+          cd dist
+          sha256sum DotRec.exe > DotRec.exe.sha256
+          cat DotRec.exe.sha256
+          echo "SHA256=$(cut -d' ' -f1 DotRec.exe.sha256)" >> "$GITHUB_ENV"
+
       - uses: actions/upload-artifact@v4
         with:
           name: DotRec
-          path: dist/DotRec.exe
+          path: |
+            dist/DotRec.exe
+            dist/DotRec.exe.sha256
 
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/DotRec.exe
+          files: |
+            dist/DotRec.exe
+            dist/DotRec.exe.sha256
           generate_release_notes: true
+          body: |
+            ### 下载 / Download
+
+            `DotRec.exe` 由 GitHub Actions 从本仓库源码自动编译。
+            Built automatically by GitHub Actions from the source in this repository.
+
+            **SHA-256**
+
+            ```
+            ${{ env.SHA256 }}
+            ```
+
+            校验方法 / Verify (PowerShell):
+
+            ```powershell
+            (Get-FileHash .\DotRec.exe -Algorithm SHA256).Hash
+            ```
+
+            输出应与上面的值一致（不区分大小写）。
+            The output should match the value above (case-insensitive).

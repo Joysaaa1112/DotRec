@@ -20,6 +20,16 @@ The exe is not code-signed, so Windows may show "Windows protected your PC" the 
 
 Requires Windows 10 or 11 (64-bit).
 
+### Verify the download
+
+Every release lists the SHA-256 of `DotRec.exe` (also available as `DotRec.exe.sha256`). Open PowerShell in your download folder and run:
+
+```powershell
+(Get-FileHash .\DotRec.exe -Algorithm SHA256).Hash
+```
+
+If the result matches the value on the release page (case-insensitive), your file is identical to the one GitHub built from source.
+
 ## Usage
 
 After launch, the DotRec icon appears in the bottom-right of the taskbar (it may be hidden under `^`). Left- or right-click it to open the menu:

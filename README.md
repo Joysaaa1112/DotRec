@@ -20,6 +20,16 @@
 
 系统要求：Windows 10 / 11（64 位）。
 
+### 校验文件
+
+每个版本的 Releases 页面都附有 `DotRec.exe` 的 SHA-256 校验值（也可以下载 `DotRec.exe.sha256`）。在下载目录打开 PowerShell 运行：
+
+```powershell
+(Get-FileHash .\DotRec.exe -Algorithm SHA256).Hash
+```
+
+结果和 Releases 页面上的值一致（不区分大小写），就说明文件和 GitHub 从源码自动编译出的完全相同。
+
 ## 使用
 
 运行后任务栏右下角会出现点录图标（可能在 `^` 里）。左键或右键点击图标打开菜单：
