@@ -1,0 +1,7 @@
+# 构建产物（由 scripts/build.sh 生成）
+/build/
+/dist/
+*.exe
+ffmpeg.exe.gz
+ffmeta.go
+rsrc_windows_amd64.syso

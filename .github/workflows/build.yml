@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 nasm make pkg-config
+
+      - name: Cache FFmpeg build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/prefix
+            build/ffmpeg/ffmpeg.exe
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('scripts/build.sh') }}
+
+      - name: Build
+        run: bash scripts/build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DotRec
+          path: dist/DotRec.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/DotRec.exe
+          generate_release_notes: true
