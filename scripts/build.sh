@@ -33,6 +33,14 @@ if [ ! -f "$PREFIX/lib/libx264.a" ]; then
 fi
 
 # ---------- FFmpeg（只保留点录需要的部分） ----------
+# FFmpeg 需要声明支持高分屏（PerMonitorV2），否则开了缩放的屏幕上 gdigrab 拿到的尺寸不对
+FF_MANIFEST_O="$BUILD/ffmpeg-manifest.o"
+if [ ! -f "$FF_MANIFEST_O" ] || [ "$ROOT/assets/ffmpeg.manifest" -nt "$FF_MANIFEST_O" ]; then
+  printf '1 24 "%s"\n' "$ROOT/assets/ffmpeg.manifest" > "$BUILD/ffmpeg-manifest.rc"
+  "$HOST-windres" -O coff -i "$BUILD/ffmpeg-manifest.rc" -o "$FF_MANIFEST_O"
+  rm -f "$BUILD/ffmpeg/ffmpeg.exe"
+fi
+
 if [ ! -f "$BUILD/ffmpeg/ffmpeg.exe" ]; then
   echo "==> 编译 FFmpeg ($FFMPEG_TAG)"
   rm -rf "$BUILD/ffmpeg"
@@ -40,7 +48,7 @@ if [ ! -f "$BUILD/ffmpeg/ffmpeg.exe" ]; then
   (cd "$BUILD/ffmpeg" && PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig" ./configure \
       --arch=x86_64 --target-os=mingw32 --cross-prefix="$HOST-" --pkg-config=pkg-config \
       --prefix="$PREFIX" --enable-static --disable-shared --enable-gpl --enable-libx264 \
-      --extra-ldflags="-static -static-libgcc" --pkg-config-flags=--static \
+      --extra-ldflags="-static -static-libgcc $FF_MANIFEST_O" --pkg-config-flags=--static \
       --disable-everything --disable-autodetect --disable-doc --disable-debug --disable-network \
       --disable-ffprobe --disable-ffplay --enable-small \
       --enable-indev=gdigrab,dshow \

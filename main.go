@@ -246,6 +246,7 @@ var (
 	exitAfter  bool
 	hotkeysOn  bool
 	recCfg     config
+	autoSize   bool // 尺寸对不上时改由 FFmpeg 自己识别屏幕
 	cfg        = config{fps: 30, mouse: true}
 )
 
@@ -648,7 +649,7 @@ func startSegment() error {
 	} else {
 		args = append(args, "-draw_mouse", "0")
 	}
-	if !s.fullDesktop {
+	if !s.fullDesktop && !autoSize {
 		w, _, _ := pGetSystemMetrics.Call(0)
 		h, _, _ := pGetSystemMetrics.Call(1)
 		args = append(args, "-offset_x", "0", "-offset_y", "0", "-video_size", fmt.Sprintf("%dx%d", w, h))
@@ -794,6 +795,7 @@ func startRec() {
 	recCfg = cfg
 	workDir, _ = os.MkdirTemp("", "dotrec-")
 	segments = nil
+	autoSize = false
 	accum = 0
 	if err := startSegment(); err != nil {
 		msgBox(T("eStart")+err.Error(), 0x10)
@@ -916,6 +918,17 @@ func wndProc(hwnd, msg, wParam, lParam uintptr) uintptr {
 		if state == "recording" && cur != nil {
 			errText := tail(cur.stderr.String())
 			cur = nil
+			// 高分屏缩放导致尺寸对不上：去掉指定尺寸，让 FFmpeg 自己识别后立刻重试
+			if !autoSize && strings.Contains(errText, "outside window area") {
+				autoSize = true
+				if n := len(segments); n > 0 {
+					os.Remove(segments[n-1])
+					segments = segments[:n-1]
+				}
+				if err := startSegment(); err == nil {
+					return 0
+				}
+			}
 			accum += time.Since(segStart)
 			if errText == "" {
 				errText = T("eBroke")
